@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>AIと学ぶプログラミング基礎</title>
+<style>
+  :root{
+    --bg:#1E1B2E;
+    --surface:#262138;
+    --surface-2:#2F2947;
+    --border:#3B3455;
+    --text:#EDEAF6;
+    --text-dim:#9C94B8;
+    --text-faint:#6E6690;
+    --mint:#7DD3AE;
+    --mint-dim:rgba(125,211,174,0.14);
+    --amber:#F0B86E;
+    --amber-dim:rgba(240,184,110,0.14);
+    --coral:#E8807A;
+    --coral-dim:rgba(232,128,122,0.14);
+    --font-ui:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,"Courier New",monospace;
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);}
+  body{
+    font-family:var(--font-ui);
+    font-size:15px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  #root{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:calc(64px + var(--safe-bottom));}
+  #app{padding:20px 18px 12px;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  .comment{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--text-faint);
+    letter-spacing:0.01em;
+  }
+
+  /* ---- Home ---- */
+  .hero{margin-bottom:22px;}
+  .hero .greet{font-size:20px;font-weight:600;margin:4px 0 2px;}
+  .hero .streak{color:var(--mint);font-size:13px;margin:0 0 14px;}
+
+  .progress-track{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden;}
+  .progress-fill{height:100%;background:var(--mint);border-radius:5px;transition:width .4s ease;}
+  .progress-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .progress-row .num{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);}
+
+  .heatmap{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;margin-top:14px;}
+  .heatmap .cell{aspect-ratio:1;border-radius:3px;background:var(--surface-2);}
+  .heatmap .cell.on{background:var(--mint);}
+  .heatmap .cell.today{outline:1.5px solid var(--text-dim);outline-offset:1px;}
+
+  .review-banner{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--coral-dim);border:1px solid rgba(232,128,122,0.35);
+    border-radius:14px;padding:14px 16px;margin:18px 0;cursor:pointer;
+  }
+  .review-banner .label{font-size:14px;color:var(--text);}
+  .review-banner .count{font-family:var(--font-mono);color:var(--coral);font-size:22px;font-weight:700;}
+  .review-banner .sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .review-banner.empty{background:var(--surface);border-color:var(--border);cursor:default;}
+  .review-banner.empty .count{color:var(--text-faint);}
+
+  .section-title{font-size:13px;color:var(--text-dim);margin:24px 0 10px;font-family:var(--font-mono);}
+
+  .continue-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  }
+  .continue-card .title{font-size:15px;font-weight:600;margin-bottom:4px;}
+  .continue-card .meta{font-size:12px;color:var(--text-dim);}
+  .continue-card .arrow{color:var(--mint);font-size:20px;}
+
+  .weak-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .weak-chip{
+    background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,184,110,0.35);
+    border-radius:20px;padding:6px 14px;font-size:13px;
+  }
+
+  /* ---- Lessons ---- */
+  .level-group{margin-bottom:26px;}
+  .level-heading{font-size:14px;font-weight:700;margin-bottom:2px;}
+  .level-sub{font-size:12px;color:var(--text-faint);margin-bottom:12px;font-family:var(--font-mono);}
+
+  .lesson-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:13px 14px;margin-bottom:8px;cursor:pointer;
+  }
+  .lesson-row.done{border-color:rgba(125,211,174,0.4);}
+  .lesson-check{
+    width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:var(--mint);
+  }
+  .lesson-row.done .lesson-check{background:var(--mint-dim);border-color:var(--mint);}
+  .lesson-body{flex:1;min-width:0;}
+  .lesson-name{font-size:14.5px;font-weight:500;}
+  .lesson-stars{font-size:11px;color:var(--amber);margin-top:2px;letter-spacing:1px;}
+
+  .locked{opacity:0.4;}
+  .placeholder-note{font-size:12.5px;color:var(--text-faint);padding:10px 2px 0;}
+
+  /* ---- Lesson detail ---- */
+  .back-row{display:flex;align-items:center;gap:6px;color:var(--text-dim);font-size:13px;margin-bottom:14px;cursor:pointer;}
+  .detail-title{font-size:21px;font-weight:700;margin:6px 0 16px;}
+  .detail-body{font-size:14.5px;color:var(--text);margin-bottom:20px;white-space:pre-wrap;}
+  .code-block{
+    background:#171426;border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;font-family:var(--font-mono);font-size:13px;color:var(--mint);
+    white-space:pre;overflow-x:auto;margin-bottom:24px;line-height:1.7;
+  }
+  .code-block .kw{color:var(--amber);}
+
+  .primary-btn{
+    display:block;width:100%;text-align:center;background:var(--mint);color:#12261D;
+    border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;
+  }
+  .primary-btn:active{opacity:0.85;}
+  .secondary-btn{
+    display:block;width:100%;text-align:center;background:transparent;color:var(--text-dim);
+    border:1px solid var(--border);border-radius:12px;padding:13px;font-size:14px;cursor:pointer;margin-top:10px;
+  }
+
+  /* ---- Exercise ---- */
+  .ex-progress{display:flex;gap:4px;margin-bottom:18px;}
+  .ex-progress .seg{height:4px;flex:1;border-radius:2px;background:var(--surface-2);}
+  .ex-progress .seg.done{background:var(--mint);}
+  .ex-progress .seg.current{background:var(--text-dim);}
+
+  .type-tag{
+    display:inline-block;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);
+    border:1px solid var(--border);border-radius:6px;padding:2px 8px;margin-bottom:12px;
+  }
+  .prompt{font-size:16px;font-weight:600;margin-bottom:16px;line-height:1.6;}
+
+  .choice{
+    display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14.5px;color:var(--text);cursor:pointer;
+  }
+  .choice.selected{border-color:var(--text-dim);}
+  .choice.correct{background:var(--mint-dim);border-color:var(--mint);color:var(--mint);}
+  .choice.wrong{background:var(--coral-dim);border-color:var(--coral);color:var(--coral);}
+  .choice:disabled{cursor:default;}
+
+  .fill-code{
+    background:#171426;border:1px solid var(--border);border-radius:12px;padding:16px;
+    font-family:var(--font-mono);font-size:14px;color:var(--mint);white-space:pre-wrap;margin-bottom:16px;line-height:1.8;
+  }
+  .fill-input{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--amber);
+    font-family:var(--font-mono);font-size:14px;border-radius:6px;padding:2px 6px;width:90px;
+  }
+  .fill-input.correct{border-color:var(--mint);color:var(--mint);}
+  .fill-input.wrong{border-color:var(--coral);color:var(--coral);}
+
+  .explain-box{
+    margin-top:16px;padding:14px 16px;border-radius:12px;font-size:13.5px;line-height:1.7;
+  }
+  .explain-box.correct{background:var(--mint-dim);color:var(--text);}
+  .explain-box.wrong{background:var(--coral-dim);color:var(--text);}
+  .explain-box .verdict{font-weight:700;margin-bottom:4px;}
+  .explain-box.correct .verdict{color:var(--mint);}
+  .explain-box.wrong .verdict{color:var(--coral);}
+
+  .result-wrap{text-align:center;padding:40px 0 20px;}
+  .result-big{font-size:38px;font-weight:800;margin-bottom:6px;}
+  .result-sub{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .result-stats{display:flex;justify-content:center;gap:28px;margin-bottom:32px;}
+  .result-stat .n{font-family:var(--font-mono);font-size:22px;font-weight:700;}
+  .result-stat .l{font-size:11px;color:var(--text-faint);margin-top:2px;}
+
+  /* ---- Review ---- */
+  .review-item{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;margin-bottom:8px;
+  }
+  .review-item .q{font-size:14px;margin-bottom:4px;}
+  .review-item .meta{font-size:11.5px;color:var(--text-faint);font-family:var(--font-mono);}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text-faint);font-size:13.5px;}
+
+  /* ---- Bottom nav ---- */
+  .bottom-nav{
+    position:fixed;left:0;right:0;bottom:0;
+    max-width:480px;margin:0 auto;
+    background:rgba(38,33,56,0.92);backdrop-filter:blur(10px);
+    border-top:1px solid var(--border);
+    display:flex;padding-bottom:var(--safe-bottom);
+    z-index:10;
+  }
+  .nav-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;color:var(--text-faint);padding:10px 0 8px;cursor:pointer;position:relative;
+  }
+  .nav-btn.active{color:var(--mint);}
+  .nav-btn svg{width:21px;height:21px;}
+  .nav-btn .nav-label{font-size:10.5px;}
+  .nav-badge{
+    position:absolute;top:4px;right:calc(50% - 20px);background:var(--coral);color:#2A1210;
+    font-size:9.5px;font-weight:700;border-radius:8px;min-width:15px;height:15px;
+    display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:var(--font-mono);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+(function(){
+  "use strict";
+  var STORAGE_KEY = "ai-programming-app-v1";
+
+  /* ============ CONTENT (static, not persisted) ============ */
+  var LEVEL_META = {
+    1: {label:"LEVEL 1", title:"プログラミングの基本"},
+    2: {label:"LEVEL 2", title:"Dart"},
+    3: {label:"LEVEL 3", title:"Flutter"}
+  };
+
+  var LESSONS = {
+    "L1-01": {level:1, order:1, title:"プログラムとは", category:"基本概念",
+      body:"プログラムとは、コンピューターに対する「指示書」です。\n\n人間が日常で話す言葉ではなく、コンピューターが実行できる形で命令を書いていきます。\n\n最も基本的なルールは「上から下へ、順番に実行される」ということ。この考え方が、すべてのプログラムの土台になります。",
+      code:"出発する\n右に曲がる\n100m進む\n到着"},
+    "L1-02": {level:1, order:2, title:"変数", category:"変数",
+      body:"変数とは、データを保存しておくための「箱」のようなものです。\n\n値を入れておいたり、あとから中身を入れ替えたりできます。同じ変数でも、実行が進むにつれて値が変わっていくことがあります。",
+      code:"int hp = 100;\nhp = 80;"},
+    "L1-03": {level:1, order:3, title:"データ型", category:"データ型",
+      body:"プログラムで扱うデータには、いくつかの「型」があります。\n\n整数(int)、小数(double)、文字列(String)、真偽値(bool)などです。変数を使うときは、その中にどんな種類のデータを入れるかを意識する必要があります。",
+      code:"int score = 100;\ndouble price = 120.5;\nString name = \"Player\";\nbool gameOver = false;"}
+  };
+
+  var QUESTIONS = {
+    "L1-01-Q1": {lessonId:"L1-01", type:"select", category:"基本概念",
+      prompt:"プログラムの基本的な実行順序として正しいものはどれ?",
+      choices:[
+        {id:"a", text:"下から上へ実行される"},
+        {id:"b", text:"上から下へ順番に実行される"},
+        {id:"c", text:"ランダムな順番で実行される"},
+        {id:"d", text:"真ん中から実行される"}
+      ],
+      answer:"b",
+      explanation:"プログラムは基本的に、書かれた順番どおり上から下へ実行されます。この流れを追えるようになることが、コードを読む第一歩です。"},
+
+    "L1-02-Q1": {lessonId:"L1-02", type:"select", category:"変数",
+      prompt:"次のコードを実行したあと、hp の値はいくつになる?\n\nint hp = 100;\nhp = 80;",
+      choices:[
+        {id:"a", text:"100"},
+        {id:"b", text:"80"},
+        {id:"c", text:"エラーになる"},
+        {id:"d", text:"0"}
+      ],
+      answer:"b",
+      explanation:"2行目で hp に新しい値 80 を代入しているため、その後の hp は 80 になります。変数は「今どんな値が入っているか」を追いながら読みます。"},
+
+    "L1-02-Q2": {lessonId:"L1-02", type:"fill", category:"変数",
+      prompt:"hp を 50 に変更したい。空欄に入る値を答えてください。",
+      codeTemplate:"int hp = 100;\nhp = ___;",
+      answer:"50",
+      explanation:"変数に新しい値を代入するときは「変数名 = 新しい値;」の形で書きます。ここでは hp を 50 にしたいので、空欄には 50 が入ります。"},
+
+    "L1-03-Q1": {lessonId:"L1-03", type:"select", category:"データ型",
+      prompt:"「160.5」のような小数を扱うのに適したデータ型はどれ?",
+      choices:[
+        {id:"a", text:"int"},
+        {id:"b", text:"double"},
+        {id:"c", text:"String"},
+        {id:"d", text:"bool"}
+      ],
+      answer:"b",
+      explanation:"小数を扱う型は double です。int は整数専用なので、小数点を含む値を入れることはできません。"},
+
+    "L1-03-Q2": {lessonId:"L1-03", type:"select", category:"データ型",
+      prompt:"true / false のような「はい・いいえ」を表すデータ型はどれ?",
+      choices:[
+        {id:"a", text:"int"},
+        {id:"b", text:"double"},
+        {id:"c", text:"String"},
+        {id:"d", text:"bool"}
+      ],
+      answer:"d",
+      explanation:"true / false の2値だけを表すデータ型が bool(真偽値)です。条件分岐(if文)などでよく使われます。"}
+  };
+
+  var LESSON_QUESTIONS = {};
+  Object.keys(QUESTIONS).forEach(function(qid){
+    var lid = QUESTIONS[qid].lessonId;
+    (LESSON_QUESTIONS[lid] = LESSON_QUESTIONS[lid] || []).push(qid);
+  });
+
+  /* ============ STATE (persisted) ============ */
+  function defaultState(){
+    return {
+      progress:{ xp:0, todayGoal:5, todayAnswered:0, todayDate:null, streakDays:0, lastStudyDate:null, studyDates:[] },
+      lessonStatus:{},
+      questionStats:{},
+      reviewList:[],
+      answerLog:[]
+    };
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        var d = defaultState();
+        return {
+          progress: Object.assign(d.progress, parsed.progress || {}),
+          lessonStatus: parsed.lessonStatus || {},
+          questionStats: parsed.questionStats || {},
+          reviewList: parsed.reviewList || [],
+          answerLog: parsed.answerLog || []
+        };
+      }
+    }catch(e){ console.error("load failed", e); }
+    return defaultState();
+  }
+
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error("save failed", e); }
+  }
+
+  var state = loadState();
+
+  var ui = {
+    screen:"home",
+    currentLessonId:null,
+    exerciseQueue:[],
+    exerciseIndex:0,
+    exerciseSource:null,
+    answered:false,
+    selectedChoiceId:null,
+    fillValue:"",
+    sessionCorrect:0,
+    sessionTotal:0
+  };
+
+  /* ============ DATE / STREAK HELPERS ============ */
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function daysBetween(a,b){
+    var da = new Date(a+"T00:00:00"), db = new Date(b+"T00:00:00");
+    return Math.round((db-da)/86400000);
+  }
+  function touchStudyToday(){
+    var t = todayStr();
+    if(state.progress.todayDate !== t){
+      state.progress.todayDate = t;
+      state.progress.todayAnswered = 0;
+    }
+    if(state.progress.lastStudyDate !== t){
+      var diff = state.progress.lastStudyDate ? daysBetween(state.progress.lastStudyDate, t) : null;
+      if(diff === 1){ state.progress.streakDays += 1; }
+      else if(diff === null || diff > 1 || diff < 0){ state.progress.streakDays = 1; }
+      state.progress.lastStudyDate = t;
+      if(state.progress.studyDates.indexOf(t) === -1) state.progress.studyDates.push(t);
+    }
+  }
+
+  /* ============ ANSWER / PROGRESS LOGIC ============ */
+  function recordAnswer(qid, correct){
+    touchStudyToday();
+    state.progress.todayAnswered += 1;
+    if(correct) state.progress.xp += 10;
+
+    var stat = state.questionStats[qid] || {correctCount:0, wrongCount:0};
+    if(correct) stat.correctCount += 1; else stat.wrongCount += 1;
+    stat.lastAnsweredAt = new Date().toISOString();
+    stat.lastCorrect = correct;
+    state.questionStats[qid] = stat;
+
+    state.answerLog.push({questionId:qid, date:todayStr(), correct:correct});
+
+    var idx = state.reviewList.indexOf(qid);
+    if(correct){ if(idx !== -1) state.reviewList.splice(idx,1); }
+    else{ if(idx === -1) state.reviewList.push(qid); }
+
+    var q = QUESTIONS[qid];
+    var lessonQs = LESSON_QUESTIONS[q.lessonId] || [];
+    var allAnswered = lessonQs.every(function(id){ return state.questionStats[id]; });
+    if(allAnswered){
+      state.lessonStatus[q.lessonId] = state.lessonStatus[q.lessonId] || {};
+      state.lessonStatus[q.lessonId].completed = true;
+      state.lessonStatus[q.lessonId].completedAt = new Date().toISOString();
+    }
+    saveState();
+  }
+
+  function xpLevel(){
+    var per = 500;
+    var level = Math.floor(state.progress.xp/per)+1;
+    var inLevel = state.progress.xp % per;
+    return {level:level, inLevel:inLevel, per:per};
+  }
+
+  function understandingByCategory(){
+    var byCat = {};
+    Object.keys(QUESTIONS).forEach(function(qid){
+      var q = QUESTIONS[qid];
+      var stat = state.questionStats[qid];
+      byCat[q.category] = byCat[q.category] || {correct:0, total:0, attempted:0};
+      byCat[q.category].total += 1;
+      if(stat){
+        byCat[q.category].attempted += 1;
+        byCat[q.category].correct += stat.correctCount;
+      }
+    });
+    return byCat;
+  }
+
+  function starsFor(cat){
+    var byCat = understandingByCategory();
+    var c = byCat[cat];
+    if(!c || c.attempted === 0) return 0;
+    var ratio = c.correct / Math.max(c.attempted,1);
+    return Math.max(1, Math.min(5, Math.round(ratio*5)));
+  }
+
+  function weakCategories(limit){
+    var byCat = understandingByCategory();
+    var list = Object.keys(byCat).filter(function(cat){ return byCat[cat].attempted > 0; });
+    list.sort(function(a,b){
+      var ra = byCat[a].correct/byCat[a].attempted, rb = byCat[b].correct/byCat[b].attempted;
+      return ra - rb;
+    });
+    return list.slice(0, limit || 3);
+  }
+
+  function nextLesson(){
+    var ids = Object.keys(LESSONS).sort(function(a,b){ return LESSONS[a].order - LESSONS[b].order; });
+    for(var i=0;i<ids.length;i++){
+      if(!(state.lessonStatus[ids[i]] && state.lessonStatus[ids[i]].completed)) return ids[i];
+    }
+    return ids[0];
+  }
+
+  /* ============ RENDER: HOME ============ */
+  function renderHeatmap(){
+    var days = 28;
+    var cells = "";
+    var today = new Date();
+    for(var i=days-1;i>=0;i--){
+      var d = new Date(today);
+      d.setDate(d.getDate()-i);
+      var ds = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      var on = state.progress.studyDates.indexOf(ds) !== -1;
+      var isToday = i===0;
+      cells += '<div class="cell'+(on?' on':'')+(isToday?' today':'')+'"></div>';
+    }
+    return '<div class="heatmap">'+cells+'</div>';
+  }
+
+  function renderHome(){
+    var lvl = xpLevel();
+    var pct = Math.round((lvl.inLevel/lvl.per)*100);
+    var reviewCount = state.reviewList.length;
+    var weak = weakCategories(3);
+    var nlid = nextLesson();
+    var nl = LESSONS[nlid];
+    var nlStars = starsFor(nl.category);
+
+    var html = "";
+    html += '<div class="hero">';
+    html += '  <div class="comment">// おかえりなさい</div>';
+    html += '  <div class="greet">今日も少しずつ進めましょう</div>';
+    html += '  <div class="streak">'+(state.progress.streakDays>0 ? state.progress.streakDays+"日連続で学習中" : "今日から学習をはじめましょう")+'</div>';
+    html += '  <div class="progress-row"><span class="comment">今日の問題</span><span class="num">'+Math.min(state.progress.todayAnswered,state.progress.todayGoal)+' / '+state.progress.todayGoal+'</span></div>';
+    html += '  <div class="progress-track"><div class="progress-fill" style="width:'+Math.min(100,(state.progress.todayAnswered/state.progress.todayGoal)*100)+'%"></div></div>';
+    html += renderHeatmap();
+    html += '</div>';
+
+    if(reviewCount>0){
+      html += '<div class="review-banner" data-action="nav" data-screen="review">';
+      html += '  <div><div class="label">復習待ちの問題があります</div><div class="sub">間違えた問題をもう一度解いてみましょう</div></div>';
+      html += '  <div class="count">'+reviewCount+'</div>';
+      html += '</div>';
+    } else {
+      html += '<div class="review-banner empty"><div><div class="label">復習待ちはありません</div><div class="sub">このまま学習を続けましょう</div></div><div class="count">0</div></div>';
+    }
+
+    html += '<div class="section-title">// 続きから学ぶ</div>';
+    html += '<div class="continue-card" data-action="openLesson" data-lesson="'+nlid+'">';
+    html += '  <div><div class="title">'+nl.title+'</div><div class="meta">LEVEL '+nl.level+' ・ '+(nlStars>0?"★".repeat(nlStars)+"☆".repeat(5-nlStars):"未挑戦")+'</div></div>';
+    html += '  <div class="arrow">›</div>';
+    html += '</div>';
+
+    if(weak.length){
+      html += '<div class="section-title">// 苦手分野</div>';
+      html += '<div class="weak-list">'+weak.map(function(c){ return '<span class="weak-chip">'+c+'</span>'; }).join("")+'</div>';
+    }
+
+    return html;
+  }
+
+  /* ============ RENDER: LESSONS ============ */
+  function renderLessons(){
+    var byLevel = {};
+    Object.keys(LESSONS).forEach(function(id){
+      var l = LESSONS[id];
+      (byLevel[l.level] = byLevel[l.level] || []).push(id);
+    });
+    Object.keys(byLevel).forEach(function(lv){
+      byLevel[lv].sort(function(a,b){ return LESSONS[a].order - LESSONS[b].order; });
+    });
+
+    var html = '<div class="section-title" style="margin-top:4px;">// レッスン一覧</div>';
+    [1,2,3].forEach(function(lv){
+      var meta = LEVEL_META[lv];
+      html += '<div class="level-group">';
+      html += '  <div class="level-heading">'+meta.label+'</div>';
+      html += '  <div class="level-sub">'+meta.title+'</div>';
+      if(byLevel[lv] && byLevel[lv].length){
+        byLevel[lv].forEach(function(id){
+          var l = LESSONS[id];
+          var done = state.lessonStatus[id] && state.lessonStatus[id].completed;
+          var stars = starsFor(l.category);
+          html += '<div class="lesson-row'+(done?' done':'')+'" data-action="openLesson" data-lesson="'+id+'">';
+          html += '  <div class="lesson-check">'+(done?"✓":"")+'</div>';
+          html += '  <div class="lesson-body"><div class="lesson-name">'+l.title+'</div>';
+          html += '  <div class="lesson-stars">'+(stars>0?"★".repeat(stars)+"☆".repeat(5-stars):"未挑戦")+'</div></div>';
+          html += '</div>';
+        });
+      } else {
+        html += '<div class="placeholder-note">準備中です</div>';
+      }
+      html += '</div>';
+    });
+    return html;
+  }
+
+  /* ============ RENDER: LESSON DETAIL ============ */
+  function renderLessonDetail(){
+    var l = LESSONS[ui.currentLessonId];
+    var html = "";
+    html += '<div class="back-row" data-action="nav" data-screen="lessons">‹ レッスン一覧</div>';
+    html += '<div class="comment">LEVEL '+l.level+' ・ '+l.category+'</div>';
+    html += '<div class="detail-title">'+l.title+'</div>';
+    html += '<div class="detail-body">'+escapeHtml(l.body)+'</div>';
+    if(l.code){
+      html += '<div class="code-block">'+escapeHtml(l.code)+'</div>';
+    }
+    html += '<button class="primary-btn" data-action="startExercise" data-source="lesson" data-lesson="'+ui.currentLessonId+'">問題を解く</button>';
+    return html;
+  }
+
+  /* ============ RENDER: EXERCISE ============ */
+  function currentQuestion(){
+    return QUESTIONS[ui.exerciseQueue[ui.exerciseIndex]];
+  }
+
+  function typeLabel(t){
+    return {select:"選択問題", fill:"穴埋め問題"}[t] || t;
+  }
+
+  function renderExerciseProgress(){
+    var segs = "";
+    ui.exerciseQueue.forEach(function(qid, i){
+      var cls = i < ui.exerciseIndex ? "done" : (i === ui.exerciseIndex ? "current" : "");
+      segs += '<div class="seg '+cls+'"></div>';
+    });
+    return '<div class="ex-progress">'+segs+'</div>';
+  }
+
+  function renderExercise(){
+    if(ui.exerciseIndex >= ui.exerciseQueue.length){
+      return renderExerciseResult();
+    }
+    var qid = ui.exerciseQueue[ui.exerciseIndex];
+    var q = QUESTIONS[qid];
+    var html = "";
+    html += renderExerciseProgress();
+    html += '<div class="type-tag">'+typeLabel(q.type)+'</div>';
+    html += '<div class="prompt">'+escapeHtml(q.prompt).replace(/\n/g,"<br>")+'</div>';
+
+    if(q.type === "select"){
+      q.choices.forEach(function(c){
+        var cls = "choice";
+        if(ui.answered){
+          if(c.id === q.answer) cls += " correct";
+          else if(c.id === ui.selectedChoiceId) cls += " wrong";
+        } else if(c.id === ui.selectedChoiceId){
+          cls += " selected";
+        }
+        html += '<button class="'+cls+'" '+(ui.answered?"disabled":"")+' data-action="selectChoice" data-choice="'+c.id+'">'+escapeHtml(c.text)+'</button>';
+      });
+      if(!ui.answered){
+        html += '<button class="primary-btn" style="margin-top:8px;" data-action="checkAnswer" '+(ui.selectedChoiceId?"":"disabled")+'>回答する</button>';
+      }
+    } else if(q.type === "fill"){
+      var filled = q.codeTemplate.replace("___",
+        '<span class="fill-input-wrap"></span>');
+      var parts = q.codeTemplate.split("___");
+      html += '<div class="fill-code">'+escapeHtml(parts[0])+
+        '<input class="fill-input'+(ui.answered ? (isFillCorrect(q) ? ' correct':' wrong') : '')+'" '+
+        (ui.answered?"disabled":"")+' id="fillInput" value="'+escapeHtml(ui.fillValue)+'" />'+
+        escapeHtml(parts[1] || "")+'</div>';
+      if(!ui.answered){
+        html += '<button class="primary-btn" data-action="checkAnswer" '+(ui.fillValue.trim()?"":"disabled")+'>回答する</button>';
+      }
+    }
+
+    if(ui.answered){
+      var correct = q.type === "select" ? (ui.selectedChoiceId === q.answer) : isFillCorrect(q);
+      html += '<div class="explain-box '+(correct?"correct":"wrong")+'">';
+      html += '  <div class="verdict">'+(correct?"正解":"不正解")+'</div>';
+      html += '  <div>'+escapeHtml(q.explanation)+'</div>';
+      html += '</div>';
+      html += '<button class="primary-btn" style="margin-top:16px;" data-action="nextQuestion">'+
+        (ui.exerciseIndex === ui.exerciseQueue.length-1 ? "結果を見る" : "次の問題へ")+'</button>';
+    }
+
+    return html;
+  }
+
+  function isFillCorrect(q){
+    return ui.fillValue.trim() === q.answer.trim();
+  }
+
+  function renderExerciseResult(){
+    var html = "";
+    html += '<div class="result-wrap">';
+    html += '  <div class="comment">// 演習結果</div>';
+    html += '  <div class="result-big">'+ui.sessionCorrect+' / '+ui.sessionTotal+'</div>';
+    html += '  <div class="result-sub">'+(ui.sessionCorrect===ui.sessionTotal ? "全問正解です" : "間違えた問題は復習リストに追加されました")+'</div>';
+    html += '  <div class="result-stats">';
+    html += '    <div class="result-stat"><div class="n">+'+(ui.sessionCorrect*10)+'</div><div class="l">XP</div></div>';
+    html += '    <div class="result-stat"><div class="n">'+state.progress.streakDays+'</div><div class="l">連続日数</div></div>';
+    html += '  </div>';
+    html += '  <button class="primary-btn" data-action="nav" data-screen="'+(ui.exerciseSource==="review"?"review":"lessons")+'">戻る</button>';
+    html += '</div>';
+    return html;
+  }
+
+  /* ============ RENDER: REVIEW ============ */
+  function renderReview(){
+    var html = '<div class="section-title" style="margin-top:4px;">// 復習リスト</div>';
+    if(state.reviewList.length === 0){
+      html += '<div class="empty-state">今のところ復習する問題はありません。<br>このまま学習を続けましょう。</div>';
+      return html;
+    }
+    html += '<button class="primary-btn" style="margin-bottom:18px;" data-action="startExercise" data-source="review">復習をはじめる('+state.reviewList.length+'問)</button>';
+    state.reviewList.forEach(function(qid){
+      var q = QUESTIONS[qid];
+      var l = LESSONS[q.lessonId];
+      html += '<div class="review-item">';
+      html += '  <div class="q">'+escapeHtml(q.prompt.split("\n")[0])+'</div>';
+      html += '  <div class="meta">'+l.title+' ・ '+typeLabel(q.type)+'</div>';
+      html += '</div>';
+    });
+    return html;
+  }
+
+  /* ============ NAV / ICONS ============ */
+  var ICONS = {
+    home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H10v-5.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V20h3.5a1 1 0 0 0 1-1v-9"/></svg>',
+    lessons:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5C20 4.7 19.3 4 18.5 4H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"/></svg>',
+    review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 13.66-5.66L20 8.5"/><path d="M20 4.5v4h-4"/><path d="M20 12a8 8 0 0 1-13.66 5.66L4 15.5"/><path d="M4 19.5v-4h4"/></svg>'
+  };
+
+  function renderNav(){
+    var reviewCount = state.reviewList.length;
+    var tabs = [
+      {id:"home", label:"ホーム"},
+      {id:"lessons", label:"レッスン"},
+      {id:"review", label:"復習"}
+    ];
+    var activeMap = {home:"home", lessons:"lessons", lessonDetail:"lessons", exercise: ui.exerciseSource==="review"?"review":"lessons", review:"review"};
+    var active = activeMap[ui.screen] || "home";
+    var html = '<nav class="bottom-nav">';
+    tabs.forEach(function(t){
+      html += '<button class="nav-btn'+(active===t.id?" active":"")+'" data-action="nav" data-screen="'+t.id+'">';
+      if(t.id==="review" && reviewCount>0){ html += '<span class="nav-badge">'+reviewCount+'</span>'; }
+      html += ICONS[t.id]+'<span class="nav-label">'+t.label+'</span></button>';
+    });
+    html += '</nav>';
+    return html;
+  }
+
+  /* ============ MASTER RENDER ============ */
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function render(){
+    var appHtml = "";
+    switch(ui.screen){
+      case "home": appHtml = renderHome(); break;
+      case "lessons": appHtml = renderLessons(); break;
+      case "lessonDetail": appHtml = renderLessonDetail(); break;
+      case "exercise": appHtml = renderExercise(); break;
+      case "review": appHtml = renderReview(); break;
+      default: appHtml = renderHome();
+    }
+    var root = document.getElementById("root");
+    root.innerHTML = '<div id="app">'+appHtml+'</div>'+renderNav();
+
+    if(ui.screen === "exercise" && !ui.answered){
+      var q = currentQuestion();
+      if(q && q.type === "fill"){
+        var input = document.getElementById("fillInput");
+        if(input){
+          input.addEventListener("input", function(e){ ui.fillValue = e.target.value; syncSubmitState(); });
+          input.focus();
+        }
+      }
+    }
+  }
+
+  function syncSubmitState(){
+    var btn = document.querySelector('.primary-btn[data-action="checkAnswer"]');
+    if(btn) btn.disabled = !ui.fillValue.trim();
+  }
+
+  /* ============ ACTIONS ============ */
+  function goScreen(screen){
+    ui.screen = screen;
+    if(screen !== "exercise"){ ui.selectedChoiceId = null; ui.answered = false; ui.fillValue=""; }
+    window.scrollTo(0,0);
+    render();
+  }
+
+  function openLesson(lessonId){
+    ui.currentLessonId = lessonId;
+    goScreen("lessonDetail");
+  }
+
+  function startExercise(source, lessonId){
+    var queue;
+    if(source === "review"){
+      queue = state.reviewList.slice();
+    } else {
+      queue = (LESSON_QUESTIONS[lessonId] || []).slice();
+    }
+    if(queue.length === 0){ return; }
+    ui.exerciseQueue = queue;
+    ui.exerciseIndex = 0;
+    ui.exerciseSource = source;
+    ui.sessionCorrect = 0;
+    ui.sessionTotal = queue.length;
+    ui.answered = false;
+    ui.selectedChoiceId = null;
+    ui.fillValue = "";
+    goScreen("exercise");
+  }
+
+  function selectChoice(choiceId){
+    if(ui.answered) return;
+    ui.selectedChoiceId = choiceId;
+    render();
+  }
+
+  function checkAnswer(){
+    var q = currentQuestion();
+    if(!q) return;
+    var correct;
+    if(q.type === "select"){
+      if(!ui.selectedChoiceId) return;
+      correct = ui.selectedChoiceId === q.answer;
+    } else {
+      if(!ui.fillValue.trim()) return;
+      correct = isFillCorrect(q);
+    }
+    ui.answered = true;
+    if(correct) ui.sessionCorrect += 1;
+    recordAnswer(ui.exerciseQueue[ui.exerciseIndex], correct);
+    render();
+  }
+
+  function nextQuestion(){
+    ui.exerciseIndex += 1;
+    ui.answered = false;
+    ui.selectedChoiceId = null;
+    ui.fillValue = "";
+    render();
+  }
+
+  function handleClick(e){
+    var el = e.target.closest("[data-action]");
+    if(!el) return;
+    var action = el.getAttribute("data-action");
+    if(action === "nav"){ goScreen(el.getAttribute("data-screen")); }
+    else if(action === "openLesson"){ openLesson(el.getAttribute("data-lesson")); }
+    else if(action === "startExercise"){ startExercise(el.getAttribute("data-source"), el.getAttribute("data-lesson")); }
+    else if(action === "selectChoice"){ selectChoice(el.getAttribute("data-choice")); }
+    else if(action === "checkAnswer"){ checkAnswer(); }
+    else if(action === "nextQuestion"){ nextQuestion(); }
+  }
+
+  document.addEventListener("click", handleClick);
+
+  render();
+})();
+</script>
+</body>
+</html>
